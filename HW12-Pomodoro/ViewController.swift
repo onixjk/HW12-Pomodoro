@@ -2,6 +2,11 @@ import UIKit
  
 class ViewController: UIViewController {
     
+    private lazy var isWorkTime = true
+    private lazy var isStarted = true
+    private lazy var durationTimer = TimerDuration.workModeDuration
+    private lazy var timer = Timer()
+    
     private lazy var container: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -69,6 +74,44 @@ class ViewController: UIViewController {
     
     @objc private func startButtonAction() {
         
+        if isStarted {
+            timer = Timer.scheduledTimer(timeInterval: 1,
+                                         target: self,
+                                         selector: #selector(timerAction),
+                                         userInfo: nil,
+                                         repeats: true)
+            isStarted = false
+            startButton.configuration?.image = UIImage(systemName: IconName.pause)
+        } else {
+            timer.invalidate()
+            isStarted = true
+            startButton.configuration?.image = UIImage(systemName: IconName.play)
+        }
+    }
+    
+    @objc private func timerAction() {
+        
+        durationTimer -= 1
+        timerLabel.text = String(format: "%02i:%02i", durationTimer / 60, durationTimer % 60)
+        
+        if durationTimer < 0 {
+            isStarted = false
+            isWorkTime = !isWorkTime
+ 
+            if isWorkTime {
+                timer.invalidate()
+                durationTimer = TimerDuration.workModeDuration
+                timerLabel.text = Strings.labelWorkModeText
+                timerLabel.textColor = Color.workTimeColor
+                startButton.configuration?.baseForegroundColor = Color.workTimeColor
+                startButton.configuration?.image = UIImage(systemName: IconName.stop)
+            } else {
+                durationTimer = TimerDuration.breakModeDuration
+                timerLabel.text = Strings.labelBreakModeText
+                timerLabel.textColor = Color.breakTimeColor
+                startButton.configuration?.baseForegroundColor = Color.breakTimeColor
+            }
+        }
     }
 }
  
@@ -108,6 +151,8 @@ extension ViewController {
     
     enum IconName {
         static let play = "play"
+        static let pause = "pause"
+        static let stop = "app"
     }
 }
  
